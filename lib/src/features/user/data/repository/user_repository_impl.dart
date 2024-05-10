@@ -1,10 +1,7 @@
 import 'package:fpdart/fpdart.dart';
-import 'package:weight_tracker/src/core/error/exception.dart';
-import 'package:weight_tracker/src/core/error/failure.dart';
-import 'package:weight_tracker/src/features/user/data/model/user_model.dart';
-import 'package:weight_tracker/src/features/user/domain/repository/user_repository.dart';
+import 'package:weight_tracker/src/app_exports.dart';
 
-import '../datasource/local_data_source.dart';
+import '../../../../core/error/exception.dart';
 
 class UserRepositoryImpl implements UserRepository {
   final LocalDataSource localDataSource;
@@ -17,14 +14,24 @@ class UserRepositoryImpl implements UserRepository {
   }
 
   @override
-  Future<Either<Failure, UserModel?>> getUserData() async {
+  Future<Either<Failure, List<UserModel>>> getUserData() async {
     return _getUser(() => localDataSource.getUserData());
   }
 
-  Future<Either<Failure, T?>> _getUser<T>(Future<T?> Function() fn) async {
+  Future<Either<Failure, T>> _getUser<T>(Future<T> Function() fn) async {
     try {
       final result = await fn();
       return Right(result);
+    } on IsarException catch (e) {
+      return Left(Failure(e.message));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> deleteUser(String username) async {
+    try {
+      await localDataSource.deleteUser(username);
+      return Right(());
     } on IsarException catch (e) {
       return Left(Failure(e.message));
     }

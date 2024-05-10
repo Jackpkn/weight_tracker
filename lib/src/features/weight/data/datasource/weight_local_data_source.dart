@@ -4,11 +4,14 @@ import '../../../../core/error/exception.dart';
 import '../model/weight_model.dart';
 
 abstract interface class WeightLocalDataSource {
-  Future<void> saveWeightInKg(double weight);
-  Future<List<WeightModel>> getAllWeightEntries();
-  Future<List<WeightModel>> getSortedWeightEntriesWithTime();
-  Future<List<WeightModel>> editWeightEntry(WeightModel weightModel);
-  Future<List<double>> getWeightChangesInMonths(int months);
+  Future<WeightModel> saveWeightInKg(WeightModel weight);
+  Future<List<WeightModel>> getAllWeightEntries({required String username});
+  Future<List<WeightModel>> getSortedWeightEntriesWithTime(
+      {required String username});
+  Future<List<WeightModel?>> editWeightEntry(
+      WeightModel weightModel, String username, int id);
+
+  Future<void> deleteWeightEntry(int id);
 }
 
 class WeightLocalDataSourceImpl implements WeightLocalDataSource {
@@ -17,62 +20,91 @@ class WeightLocalDataSourceImpl implements WeightLocalDataSource {
   WeightLocalDataSourceImpl(this.database);
 
   @override
-  Future<void> saveWeightInKg(double weight) async {
+  Future<WeightModel> saveWeightInKg(WeightModel weight) async {
     try {
-      await database.writeTxn(() {
-        return database.weightModels.put(WeightModel(
-          weight: weight,
-          date: DateTime.now(),
+      int id = await database.writeTxn(() async {
+        return await database.weightModels.put(WeightModel(
+          weight: weight.weight,
+          date: weight.date,
+          username: weight.username,
         ));
       });
+
+      weight.id = id; // Assign the id to your weight object
+      return weight;
     } on IsarException catch (e) {
       throw Exception(e.toString());
     }
   }
 
   @override
-  Future<List<WeightModel>> getAllWeightEntries() async {
+  Future<List<WeightModel>> getAllWeightEntries(
+      {required String username}) async {
     try {
-      return database.weightModels.where().findAll();
-    } on IsarException catch (e) {
-      throw Exception(e.toString());
-    }
-  }
-
-  @override
-  Future<List<WeightModel>> getSortedWeightEntriesWithTime() async {
-    try {
-      return database.weightModels.where().sortByDate().findAll();
-    } on IsarException catch (e) {
-      throw Exception(e.toString());
-    }
-  }
-
-  @override
-  Future<List<double>> getWeightChangesInMonths(int months) async {
-    try {
-      final now = DateTime.now();
-      final start = DateTime(now.year, now.month - months, now.day);
-      final end = DateTime(now.year, now.month, now.day);
-      final entries = await database.weightModels
+      return database.weightModels
           .where()
           .filter()
-          .dateBetween(start, end)
-          .sortByDate()
+          .usernameEqualTo(username)
           .findAll();
-      return entries.map((e) => e.weight).toList();
+      // return database.weightModels.where().findAll();
     } on IsarException catch (e) {
       throw Exception(e.toString());
     }
   }
 
   @override
-  Future<List<WeightModel>> editWeightEntry(WeightModel weightModel) async {
+  Future<List<WeightModel>> getSortedWeightEntriesWithTime(
+      {required String username}) async {
     try {
-      await database.writeTxn(() {
-        return database.weightModels.put(weightModel);
+      return database.weightModels
+          .where()
+          .filter()
+          .usernameEqualTo(username)
+          .sortByDate()
+          .findAll();
+    } on IsarException catch (e) {
+      throw Exception(e.toString());
+    }
+  }
+
+  @override
+  Future<List<WeightModel?>> editWeightEntry(
+      WeightModel weightModel, String username, int id) async {
+    try {
+      await database.writeTxn(() async {
+        final existingWeightModel = await database.weightModels
+            .where()
+            .filter()
+            .usernameEqualTo(username)
+            .and()
+            .idEqualTo(id)
+            .findFirst();
+
+        if (existingWeightModel != null) {
+          // Update the existingWeightModel with the new weightModel's values
+          existingWeightModel.weight = weightModel.weight;
+          existingWeightModel.date = weightModel.date;
+
+          // Put the updated existingWeightModel back into the database
+          await database.weightModels.put(existingWeightModel);
+        }
       });
-      return database.weightModels.where().findAll();
+      return database.weightModels
+          .where()
+          .filter()
+          .usernameEqualTo(username)
+          .findAll();
+    } catch (e) {
+      throw Exception(e.toString());
+    }
+  }
+
+  @override
+  Future<void> deleteWeightEntry(int id) async {
+    try {
+      await database.writeTxn(() async {
+        await database.weightModels.delete(id);
+      });
     } catch (e) {
       throw Exception(e.toString());
     }

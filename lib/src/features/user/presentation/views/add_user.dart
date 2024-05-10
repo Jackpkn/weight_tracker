@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:weight_tracker/src/core/widgets/custom_button.dart';
-import 'package:weight_tracker/src/core/widgets/custom_reusable_text.dart';
-import 'package:weight_tracker/src/core/widgets/custom_text_form_field.dart';
-
-import '../../../../core/utils/show_snackbar.dart';
-import '../bloc/user_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:weight_tracker/src/app_exports.dart';
+import 'package:weight_tracker/src/core/widgets/loader.dart';
 
 class AddUserScreen extends StatefulWidget {
   const AddUserScreen({super.key});
@@ -16,7 +13,12 @@ class AddUserScreen extends StatefulWidget {
 
 class _AddUserScreenState extends State<AddUserScreen> {
   final _usernameController = TextEditingController();
-  final _formKey = GlobalKey<FormState>();
+
+  @override
+  void initState() {
+    super.initState();
+    context.read<UserBloc>().add(GetUserEvent());
+  }
 
   @override
   void dispose() {
@@ -24,58 +26,88 @@ class _AddUserScreenState extends State<AddUserScreen> {
     super.dispose();
   }
 
+  DateTime? lastPressedAt;
+  Future<bool> _onWillPop() async {
+    final now = DateTime.now();
+    if (lastPressedAt == null ||
+        now.difference(lastPressedAt!) > const Duration(seconds: 2)) {
+      lastPressedAt = now;
+      showSnackBar(context, 'Press back again to exit');
+      return false;
+    }
+    return true;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Add User'),
-      ),
-      body: BlocConsumer<UserBloc, UserState>(
-        listener: (context, state) {
-          if (state is UserError) {
-            showSnackBar(context, state.message);
-          } else if (state is UserAdded) {
-            showSnackBar(context, 'User added successfully');
-          }
-        },
-        builder: (context, state) {
-          return Form(
-            key: _formKey,
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  ReusableTextFormField(
-                    validator: (value) {
-                      if (value!.isEmpty) {
-                        return 'username can not be empty';
-                      }
-                      return null;
-                    },
-                    controller: _usernameController,
-                    onSaved: (onSaved) {},
-                  ),
-                  const SizedBox(height: 20),
-                  CustomButton(
-                    onPressed: () {
-                      FocusScope.of(context).unfocus();
-                      if (_formKey.currentState!.validate()) {
-                        final userBloc = context.read<UserBloc>();
-                        return userBloc.add(CreateUserEvent(
-                          username: _usernameController.text.trim(),
-                        ));
-                      }
-                    },
-                    child: const ReusableText(
-                      text: 'Add User',
-                      style: TextStyle(fontSize: 20),
-                    ),
-                  ),
-                ],
-              ),
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: SafeArea(
+        child: Scaffold(
+          appBar: AppBar(
+            centerTitle: true,
+            title: ReusableText(
+              text: AppTexts.userManagement,
             ),
-          );
-        },
+            actions: <Widget>[
+              IconButton(
+                icon: const Icon(Icons.add),
+                onPressed: () {
+                  showAddNewData(context, _usernameController);
+                },
+              ),
+            ],
+          ),
+          body: BlocConsumer<UserBloc, UserState>(
+            listener: (context, state) {
+              if (state is UserError) {
+                showSnackBar(context, state.message);
+                context.read<UserBloc>().add(GetUserEvent());
+              } else if (state is UserAdded) {
+                showSnackBar(context, AppTexts.userAdded);
+              }
+            },
+            builder: (context, state) {
+              if (state is UserLoading) {
+                return const Loader();
+              }
+              if (state is UserData && state.users.isNotEmpty) {
+                return Padding(
+                  padding: AppCustomStyle.addScreenPadding,
+                  child: ListView.builder(
+                    itemCount: state.users.length,
+                    itemBuilder: (context, index) {
+                      return UserCard(
+                        userModel: state.users[index],
+                        onTap: () {
+                          context.push(
+                              '/home/${state.users[index].name.toString()}');
+                        },
+                      );
+                    },
+                  ),
+                );
+              } else {
+                return _errorWidget();
+              }
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  _errorWidget() {
+    return Center(
+      child: GlobalContainer(
+        height: 50,
+        width: MediaQuery.of(context).size.width / 2,
+        color: Colors.greenAccent,
+        borderWidth: 1,
+        child: ReusableText(
+          text: AppTexts.noUserFound,
+          style: AppStyle.userNoUserFound,
+        ),
       ),
     );
   }

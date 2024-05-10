@@ -2,13 +2,17 @@ import 'package:isar/isar.dart';
 
 part 'weight_model.g.dart';
 
-@collection
+@Collection()
 class WeightModel {
-  final Id id = Isar.autoIncrement;
-  final double weight;
-  final DateTime date;
+  Id? id;
+
+  double? weight;
+  DateTime? date;
+  String? username;
+
   WeightModel({
     required this.weight,
     required this.date,
+    required this.username,
   });
 }

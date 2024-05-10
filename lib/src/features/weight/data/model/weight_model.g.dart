@@ -22,8 +22,13 @@ const WeightModelSchema = CollectionSchema(
       name: r'date',
       type: IsarType.dateTime,
     ),
-    r'weight': PropertySchema(
+    r'username': PropertySchema(
       id: 1,
+      name: r'username',
+      type: IsarType.string,
+    ),
+    r'weight': PropertySchema(
+      id: 2,
       name: r'weight',
       type: IsarType.double,
     )
@@ -48,6 +53,12 @@ int _weightModelEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
+  {
+    final value = object.username;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   return bytesCount;
 }
 
@@ -58,7 +69,8 @@ void _weightModelSerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeDateTime(offsets[0], object.date);
-  writer.writeDouble(offsets[1], object.weight);
+  writer.writeString(offsets[1], object.username);
+  writer.writeDouble(offsets[2], object.weight);
 }
 
 WeightModel _weightModelDeserialize(
@@ -68,9 +80,11 @@ WeightModel _weightModelDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = WeightModel(
-    date: reader.readDateTime(offsets[0]),
-    weight: reader.readDouble(offsets[1]),
+    date: reader.readDateTimeOrNull(offsets[0]),
+    username: reader.readStringOrNull(offsets[1]),
+    weight: reader.readDoubleOrNull(offsets[2]),
   );
+  object.id = id;
   return object;
 }
 
@@ -82,16 +96,18 @@ P _weightModelDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 1:
-      return (reader.readDouble(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
+    case 2:
+      return (reader.readDoubleOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
 }
 
 Id _weightModelGetId(WeightModel object) {
-  return object.id;
+  return object.id ?? Isar.autoIncrement;
 }
 
 List<IsarLinkBase<dynamic>> _weightModelGetLinks(WeightModel object) {
@@ -99,7 +115,9 @@ List<IsarLinkBase<dynamic>> _weightModelGetLinks(WeightModel object) {
 }
 
 void _weightModelAttach(
-    IsarCollection<dynamic> col, Id id, WeightModel object) {}
+    IsarCollection<dynamic> col, Id id, WeightModel object) {
+  object.id = id;
+}
 
 extension WeightModelQueryWhereSort
     on QueryBuilder<WeightModel, WeightModel, QWhere> {
@@ -181,8 +199,25 @@ extension WeightModelQueryWhere
 
 extension WeightModelQueryFilter
     on QueryBuilder<WeightModel, WeightModel, QFilterCondition> {
+  QueryBuilder<WeightModel, WeightModel, QAfterFilterCondition> dateIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'date',
+      ));
+    });
+  }
+
+  QueryBuilder<WeightModel, WeightModel, QAfterFilterCondition>
+      dateIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'date',
+      ));
+    });
+  }
+
   QueryBuilder<WeightModel, WeightModel, QAfterFilterCondition> dateEqualTo(
-      DateTime value) {
+      DateTime? value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
         property: r'date',
@@ -192,7 +227,7 @@ extension WeightModelQueryFilter
   }
 
   QueryBuilder<WeightModel, WeightModel, QAfterFilterCondition> dateGreaterThan(
-    DateTime value, {
+    DateTime? value, {
     bool include = false,
   }) {
     return QueryBuilder.apply(this, (query) {
@@ -205,7 +240,7 @@ extension WeightModelQueryFilter
   }
 
   QueryBuilder<WeightModel, WeightModel, QAfterFilterCondition> dateLessThan(
-    DateTime value, {
+    DateTime? value, {
     bool include = false,
   }) {
     return QueryBuilder.apply(this, (query) {
@@ -218,8 +253,8 @@ extension WeightModelQueryFilter
   }
 
   QueryBuilder<WeightModel, WeightModel, QAfterFilterCondition> dateBetween(
-    DateTime lower,
-    DateTime upper, {
+    DateTime? lower,
+    DateTime? upper, {
     bool includeLower = true,
     bool includeUpper = true,
   }) {
@@ -234,8 +269,24 @@ extension WeightModelQueryFilter
     });
   }
 
+  QueryBuilder<WeightModel, WeightModel, QAfterFilterCondition> idIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'id',
+      ));
+    });
+  }
+
+  QueryBuilder<WeightModel, WeightModel, QAfterFilterCondition> idIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'id',
+      ));
+    });
+  }
+
   QueryBuilder<WeightModel, WeightModel, QAfterFilterCondition> idEqualTo(
-      Id value) {
+      Id? value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
         property: r'id',
@@ -245,7 +296,7 @@ extension WeightModelQueryFilter
   }
 
   QueryBuilder<WeightModel, WeightModel, QAfterFilterCondition> idGreaterThan(
-    Id value, {
+    Id? value, {
     bool include = false,
   }) {
     return QueryBuilder.apply(this, (query) {
@@ -258,7 +309,7 @@ extension WeightModelQueryFilter
   }
 
   QueryBuilder<WeightModel, WeightModel, QAfterFilterCondition> idLessThan(
-    Id value, {
+    Id? value, {
     bool include = false,
   }) {
     return QueryBuilder.apply(this, (query) {
@@ -271,8 +322,8 @@ extension WeightModelQueryFilter
   }
 
   QueryBuilder<WeightModel, WeightModel, QAfterFilterCondition> idBetween(
-    Id lower,
-    Id upper, {
+    Id? lower,
+    Id? upper, {
     bool includeLower = true,
     bool includeUpper = true,
   }) {
@@ -287,8 +338,178 @@ extension WeightModelQueryFilter
     });
   }
 
+  QueryBuilder<WeightModel, WeightModel, QAfterFilterCondition>
+      usernameIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'username',
+      ));
+    });
+  }
+
+  QueryBuilder<WeightModel, WeightModel, QAfterFilterCondition>
+      usernameIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'username',
+      ));
+    });
+  }
+
+  QueryBuilder<WeightModel, WeightModel, QAfterFilterCondition> usernameEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'username',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<WeightModel, WeightModel, QAfterFilterCondition>
+      usernameGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'username',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<WeightModel, WeightModel, QAfterFilterCondition>
+      usernameLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'username',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<WeightModel, WeightModel, QAfterFilterCondition> usernameBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'username',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<WeightModel, WeightModel, QAfterFilterCondition>
+      usernameStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'username',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<WeightModel, WeightModel, QAfterFilterCondition>
+      usernameEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'username',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<WeightModel, WeightModel, QAfterFilterCondition>
+      usernameContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'username',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<WeightModel, WeightModel, QAfterFilterCondition> usernameMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'username',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<WeightModel, WeightModel, QAfterFilterCondition>
+      usernameIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'username',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<WeightModel, WeightModel, QAfterFilterCondition>
+      usernameIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'username',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<WeightModel, WeightModel, QAfterFilterCondition> weightIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'weight',
+      ));
+    });
+  }
+
+  QueryBuilder<WeightModel, WeightModel, QAfterFilterCondition>
+      weightIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'weight',
+      ));
+    });
+  }
+
   QueryBuilder<WeightModel, WeightModel, QAfterFilterCondition> weightEqualTo(
-    double value, {
+    double? value, {
     double epsilon = Query.epsilon,
   }) {
     return QueryBuilder.apply(this, (query) {
@@ -302,7 +523,7 @@ extension WeightModelQueryFilter
 
   QueryBuilder<WeightModel, WeightModel, QAfterFilterCondition>
       weightGreaterThan(
-    double value, {
+    double? value, {
     bool include = false,
     double epsilon = Query.epsilon,
   }) {
@@ -317,7 +538,7 @@ extension WeightModelQueryFilter
   }
 
   QueryBuilder<WeightModel, WeightModel, QAfterFilterCondition> weightLessThan(
-    double value, {
+    double? value, {
     bool include = false,
     double epsilon = Query.epsilon,
   }) {
@@ -332,8 +553,8 @@ extension WeightModelQueryFilter
   }
 
   QueryBuilder<WeightModel, WeightModel, QAfterFilterCondition> weightBetween(
-    double lower,
-    double upper, {
+    double? lower,
+    double? upper, {
     bool includeLower = true,
     bool includeUpper = true,
     double epsilon = Query.epsilon,
@@ -368,6 +589,18 @@ extension WeightModelQuerySortBy
   QueryBuilder<WeightModel, WeightModel, QAfterSortBy> sortByDateDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'date', Sort.desc);
+    });
+  }
+
+  QueryBuilder<WeightModel, WeightModel, QAfterSortBy> sortByUsername() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'username', Sort.asc);
+    });
+  }
+
+  QueryBuilder<WeightModel, WeightModel, QAfterSortBy> sortByUsernameDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'username', Sort.desc);
     });
   }
 
@@ -410,6 +643,18 @@ extension WeightModelQuerySortThenBy
     });
   }
 
+  QueryBuilder<WeightModel, WeightModel, QAfterSortBy> thenByUsername() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'username', Sort.asc);
+    });
+  }
+
+  QueryBuilder<WeightModel, WeightModel, QAfterSortBy> thenByUsernameDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'username', Sort.desc);
+    });
+  }
+
   QueryBuilder<WeightModel, WeightModel, QAfterSortBy> thenByWeight() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'weight', Sort.asc);
@@ -431,6 +676,13 @@ extension WeightModelQueryWhereDistinct
     });
   }
 
+  QueryBuilder<WeightModel, WeightModel, QDistinct> distinctByUsername(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'username', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<WeightModel, WeightModel, QDistinct> distinctByWeight() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'weight');
@@ -446,13 +698,19 @@ extension WeightModelQueryProperty
     });
   }
 
-  QueryBuilder<WeightModel, DateTime, QQueryOperations> dateProperty() {
+  QueryBuilder<WeightModel, DateTime?, QQueryOperations> dateProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'date');
     });
   }
 
-  QueryBuilder<WeightModel, double, QQueryOperations> weightProperty() {
+  QueryBuilder<WeightModel, String?, QQueryOperations> usernameProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'username');
+    });
+  }
+
+  QueryBuilder<WeightModel, double?, QQueryOperations> weightProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'weight');
     });

@@ -1,17 +1,19 @@
-import 'package:fpdart/src/either.dart';
-import 'package:weight_tracker/src/core/error/failure.dart';
+import 'package:fpdart/fpdart.dart';
+import 'package:weight_tracker/src/app_exports.dart';
 
-import '../../../../core/usecases/usercases.dart';
-import '../../data/model/weight_model.dart';
-import '../repository/weight_repository.dart';
-
-class GetAllWeightUseCase implements UseCase<List<WeightModel>, NoParams> {
+class GetAllWeightUseCase implements UseCase<List<WeightModel>, UserParams> {
   final WeightRepository repository;
 
   GetAllWeightUseCase(this.repository);
 
   @override
-  Future<Either<Failure, List<WeightModel>>> call(NoParams params) {
-    return repository.getAllWeightEntries();
+  Future<Either<Failure, List<WeightModel>>> call(UserParams username) {
+    return repository.getAllWeightEntries(username: username.username);
   }
+}
+
+class UserParams {
+  final String username;
+
+  UserParams({required this.username});
 }

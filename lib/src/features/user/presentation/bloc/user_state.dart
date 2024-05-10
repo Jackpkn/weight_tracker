@@ -23,12 +23,13 @@ final class UserAdded extends UserState {
   List<Object> get props => [];
 }
 
-final class UserData extends UserState {
-  final UserModel user;
+class UserData extends UserState {
+  final List<UserModel> users;
 
-  UserData(this.user);
+  UserData(this.users);
+
   @override
-  List<Object> get props => [user];
+  List<Object> get props => [users];
 }
 
 final class UserError extends UserState {

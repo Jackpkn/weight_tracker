@@ -2,29 +2,47 @@ import 'package:flutter/material.dart';
 
 class ReusableTextFormField extends StatelessWidget {
   final String? Function(String?)? validator;
-  final bool obscureText;
+
   final String labelText;
   final String hintText;
-  final void Function(String?)? onSaved;
+  final TextInputType keyboardType;
   final TextEditingController controller;
   const ReusableTextFormField({
     super.key,
     required this.validator,
     required this.controller,
-    required this.onSaved,
     this.labelText = '',
     this.hintText = '',
-    this.obscureText = false,
+    this.keyboardType = TextInputType.text,
   });
 
   @override
   Widget build(BuildContext context) {
     return TextFormField(
-      obscureText: obscureText,
       validator: validator,
-      onSaved: onSaved,
       controller: controller,
+      keyboardType: keyboardType,
       decoration: InputDecoration(
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(
+            color: Theme.of(context).primaryColor,
+            width: 1,
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(
+            width: 1,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(
+            color: Theme.of(context).primaryColor,
+            width: 1,
+          ),
+        ),
         labelText: labelText,
         hintText: hintText,
       ),

@@ -1,20 +1,12 @@
 import 'package:get_it/get_it.dart';
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:weight_tracker/src/config/router/route_name.dart';
-import 'package:weight_tracker/src/config/router/router.dart';
-import 'package:weight_tracker/src/features/user/data/datasource/local_data_source.dart';
-import 'package:weight_tracker/src/features/user/data/model/user_model.dart';
-import 'package:weight_tracker/src/features/user/data/repository/user_repository_impl.dart';
-import 'package:weight_tracker/src/features/user/domain/repository/user_repository.dart';
-import 'package:weight_tracker/src/features/user/domain/usecases/create_user_use_case.dart';
-import 'package:weight_tracker/src/features/user/domain/usecases/get_user_use_cases.dart';
-import 'package:weight_tracker/src/features/user/presentation/bloc/user_bloc.dart';
+import 'package:weight_tracker/src/app_exports.dart';
 
 Future<Isar> openDatabase() async {
   final dir = await getApplicationDocumentsDirectory();
   return await Isar.open(
-    [UserModelSchema],
+    [UserModelSchema, WeightModelSchema],
     directory: dir.path,
   );
 }
@@ -22,14 +14,10 @@ Future<Isar> openDatabase() async {
 final serviceLocator = GetIt.instance;
 Future<void> setupServiceLocator() async {
   serviceLocator.registerSingleton<Isar>(await openDatabase());
-  _appDependencies();
-  _userDependencies();
-}
 
-void _appDependencies() {
-  serviceLocator
-    ..registerLazySingleton<RouteName>(() => RouteName())
-    ..registerLazySingleton<Routers>(() => Routers());
+  _userDependencies();
+
+  _weightDependencies();
 }
 
 void _userDependencies() {
@@ -46,10 +34,39 @@ void _userDependencies() {
     // use case
     ..registerFactory(() => CreateUserUseCase(serviceLocator()))
     ..registerFactory(() => GetUserUseCase(serviceLocator()))
+    ..registerFactory(() => DeleteUserUseCase(serviceLocator()))
     // bloc
     ..registerFactory(
       () => UserBloc(
+          deleteUserUseCase: serviceLocator(),
           createUserUseCase: serviceLocator(),
-          getUserUseCase: serviceLocator()),
+          getUserUseCase: serviceLocator(),
+          deleteWeightEntryUse: serviceLocator()),
     );
+}
+
+void _weightDependencies() {
+  // data source
+  serviceLocator
+    ..registerFactory<WeightLocalDataSource>(
+        () => WeightLocalDataSourceImpl(serviceLocator()))
+    // repository
+    ..registerFactory<WeightRepository>(
+        () => WeightRepositoryImpl(serviceLocator()))
+    // use case
+    ..registerFactory(() => AddWeightUseCase(serviceLocator()))
+    ..registerFactory(() => EditWeightEntryUse(serviceLocator()))
+
+    // bloc
+
+    ..registerFactory(() => GetSortedWeight(serviceLocator()))
+    ..registerFactory(() => GetAllWeightUseCase(serviceLocator()))
+    ..registerFactory(() => DeleteWeightEntryUse(serviceLocator()))
+    ..registerFactory(() => WeightBloc(
+          addWeightUseCase: serviceLocator(),
+          getWeightEntries: serviceLocator(),
+          editWeightEntry: serviceLocator(),
+          entriesWithTime: serviceLocator(),
+          deleteWeightEntryUse: serviceLocator(),
+        ));
 }

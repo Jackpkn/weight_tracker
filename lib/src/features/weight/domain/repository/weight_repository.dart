@@ -1,13 +1,14 @@
 import 'package:fpdart/fpdart.dart';
-import 'package:weight_tracker/src/core/error/failure.dart';
-
-import '../../data/model/weight_model.dart';
+import 'package:weight_tracker/src/app_exports.dart';
 
 abstract interface class WeightRepository {
-  Future<Either<Failure, void>> saveWeightInKg(double weight);
-  Future<Either<Failure, List<WeightModel>>> getAllWeightEntries();
-  Future<Either<Failure, List<WeightModel>>> getSortedWeightEntriesWithTime();
-  Future<Either<Failure, List<WeightModel>>> editWeightEntry(
-      WeightModel weightModel);
-  Future<Either<Failure, List<double>>> getWeightChangesInMonths(int months);
+  Future<Either<Failure, WeightModel>> saveWeight(WeightModel weight);
+  Future<Either<Failure, List<WeightModel>>> getAllWeightEntries(
+      {required String username});
+  Future<Either<Failure, List<WeightModel>>> getSortedWeightEntriesWithTime(
+      String username);
+  Future<Either<Failure, List<WeightModel?>>> editWeightEntry(
+      WeightModel weightModel, String username, int id);
+
+  Future<Either<Failure, void>> deleteWeightEntry(int id);
 }

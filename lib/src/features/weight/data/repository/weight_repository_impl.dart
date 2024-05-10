@@ -11,33 +11,29 @@ class WeightRepositoryImpl implements WeightRepository {
   WeightRepositoryImpl(this.weightLocalDataSource);
 
   @override
-  Future<Either<Failure, List<WeightModel>>> getAllWeightEntries() {
+  Future<Either<Failure, List<WeightModel>>> getAllWeightEntries(
+      {required String username}) {
     return _weightFunction<List<WeightModel>>(
-        () => weightLocalDataSource.getAllWeightEntries());
+        () => weightLocalDataSource.getAllWeightEntries(username: username));
   }
 
   @override
-  Future<Either<Failure, List<WeightModel>>> getSortedWeightEntriesWithTime() {
-    return _weightFunction<List<WeightModel>>(
-        () => weightLocalDataSource.getSortedWeightEntriesWithTime());
+  Future<Either<Failure, List<WeightModel>>> getSortedWeightEntriesWithTime(
+      String username) {
+    return _weightFunction<List<WeightModel>>(() => weightLocalDataSource
+        .getSortedWeightEntriesWithTime(username: username));
   }
 
   @override
-  Future<Either<Failure, List<double>>> getWeightChangesInMonths(int months) {
-    return _weightFunction<List<double>>(
-        () => weightLocalDataSource.getWeightChangesInMonths(months));
-  }
-
-  @override
-  Future<Either<Failure, void>> saveWeightInKg(double weight) {
+  Future<Either<Failure, WeightModel>> saveWeight(WeightModel weight) {
     return _weightFunction(() => weightLocalDataSource.saveWeightInKg(weight));
   }
 
   @override
-  Future<Either<Failure, List<WeightModel>>> editWeightEntry(
-      WeightModel weightModel) {
-    return _weightFunction<List<WeightModel>>(
-        () => weightLocalDataSource.editWeightEntry(weightModel));
+  Future<Either<Failure, List<WeightModel?>>> editWeightEntry(
+      WeightModel weightModel, String username, int id) {
+    return _weightFunction<List<WeightModel?>>(
+        () => weightLocalDataSource.editWeightEntry(weightModel, username, id));
   }
 
   Future<Either<Failure, T>> _weightFunction<T>(Future<T> Function() fn) async {
@@ -46,6 +42,16 @@ class WeightRepositoryImpl implements WeightRepository {
       return Right(result);
     } on IsarException catch (e) {
       return Left(Failure(e.message));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> deleteWeightEntry(int id) async {
+    try {
+      await weightLocalDataSource.deleteWeightEntry(id);
+      return const Right(());
+    } on IsarException catch (e) {
+      return Left((Failure(e.message)));
     }
   }
 }

@@ -16,3 +16,14 @@ class GetUserEvent extends UserEvent {
   @override
   List<Object?> get props => [];
 }
+
+class DeleteUser extends UserEvent {
+  final String username;
+
+  DeleteUser(
+    this.username,
+  );
+  @override
+  // TODO: implement props
+  List<Object?> get props => [username];
+}

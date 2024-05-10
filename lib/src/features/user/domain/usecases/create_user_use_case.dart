@@ -1,9 +1,5 @@
 import 'package:fpdart/fpdart.dart';
-import 'package:weight_tracker/src/features/user/data/model/user_model.dart';
-
-import '../../../../core/error/failure.dart';
-import '../../../../core/usecases/usercases.dart';
-import '../repository/user_repository.dart';
+import 'package:weight_tracker/src/app_exports.dart';
 
 class CreateUserUseCase implements UseCase<void, UserModel> {
   final UserRepository _userRepository;
