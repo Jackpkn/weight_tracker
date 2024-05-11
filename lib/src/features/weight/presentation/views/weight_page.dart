@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:weight_tracker/src/app_exports.dart';
 import 'package:weight_tracker/src/core/widgets/get_random_color.dart';
 import 'package:weight_tracker/src/core/widgets/loader.dart';
 import 'package:weight_tracker/src/features/weight/presentation/widgets/add_new_weight_dialog.dart';
 import 'package:weight_tracker/src/features/weight/presentation/widgets/weight_list_card.dart';
-
-import '../widgets/weight_line_chart.dart';
 
 class WeightListPage extends StatefulWidget {
   final String username;
@@ -102,17 +101,15 @@ class _WeightListPageState extends State<WeightListPage> {
                                 FocusScope.of(context).unfocus();
                                 return;
                               }
-
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) => WeightChart(
-                                    weights: state.weightEntries.isNotEmpty
-                                        ? state.weightEntries
-                                        : [],
-                                    numMonths: int.parse(
-                                        _addMonthController.text.trim()),
-                                  ),
-                                ),
+                              context.push(
+                                '/weight-chart',
+                                extra: {
+                                  'weights': state.weightEntries.isNotEmpty
+                                      ? state.weightEntries
+                                      : [],
+                                  'numMonths': int.parse(
+                                      _addMonthController.text.trim()),
+                                },
                               );
                             },
                             child: GlobalContainer(

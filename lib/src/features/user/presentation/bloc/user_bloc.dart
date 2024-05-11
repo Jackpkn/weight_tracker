@@ -16,7 +16,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
   final CreateUserUseCase _createUserUseCase;
   final GetUserUseCase _getUserUseCase;
   final DeleteUserUseCase _deleteUserUseCase;
-  final DeleteWeightEntryUse _deleteWeightEntryUse;
+
   UserBloc({
     required CreateUserUseCase createUserUseCase,
     required GetUserUseCase getUserUseCase,
@@ -25,7 +25,6 @@ class UserBloc extends Bloc<UserEvent, UserState> {
   })  : _createUserUseCase = createUserUseCase,
         _getUserUseCase = getUserUseCase,
         _deleteUserUseCase = deleteUserUseCase,
-        _deleteWeightEntryUse = deleteWeightEntryUse,
         super(UserInitial()) {
     on<CreateUserEvent>(_addUser);
     on<GetUserEvent>(_getUserData);
